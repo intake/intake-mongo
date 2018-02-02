@@ -1,0 +1,10 @@
+plugins:
+  source:
+    - module: intake_mongo
+
+sources:
+  - name: sample1
+    driver: mongo
+    args:
+      uri: 'mongodb://localhost:27017'
+      collection: test_collection

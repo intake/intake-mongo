@@ -10,7 +10,7 @@ class Plugin(base.Plugin):
                                      container='dataframe',
                                      partition_access=False)
 
-    def open(self, uri, query, projection, **kwargs):
+    def open(self, uri, collection, query=None, projection=None, **kwargs):
         """
         Parameters:
             uri : str
@@ -25,27 +25,29 @@ class Plugin(base.Plugin):
         """
         base_kwargs, source_kwargs = self.separate_base_kwargs(kwargs)
         return MongoDBSource(uri=uri,
+                             collection=collection
                              query=query,
                              projection=projection,
                              metadata=base_kwargs['metadata'])
 
 
 class MongoDBSource(base.DataSource):
-    def __init__(self, uri, query, projection, metadata):
+    def __init__(self, uri, collection, query=None, projection=None, metadata=None):
         self._init_args = {
             'uri': uri,
-            'sql_expr': sql_expr,
-            'pg_kwargs': pg_kwargs,
-            'metadata': metadata,
+            'collection': collection,
+            'query': query,
+            'projection': projection,
         }
 
         self._uri = uri
+        self._collection = collection
         self._query = query
         self._projection = projection
         self._dataframe = None
 
-        super(PostgresSource, self).__init__(container='dataframe',
-                                             metadata=metadata)
+        super(MongoDBSource, self).__init__(container='dataframe',
+                                            metadata=metadata)
 
     def _get_schema(self):
         pass
