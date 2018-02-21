@@ -19,10 +19,14 @@ conda install -c intake intake-mongo
     git clone https://github.com/ContinuumIO/MongoAdapter.git
     conda build MongoAdapter/buildscripts/condarecipe
     conda install --use-local mongoadapter
-    conda install pandas mongodb
     ```
 
 1. Development installation:
     ```
     python setup.py develop --no-deps
     ```
+
+1. Running tests requires pytest, run them using pytest from the base directory:
+   ```
+   conda install pytest
+   ```
