@@ -10,6 +10,10 @@ class Plugin(base.Plugin):
                                      container='dataframe',
                                      partition_access=False)
 
+        # TODO: The following should be part of "super" initialization.
+        self.api_version = 1
+
+
     def open(self, uri, collection, query=None, projection=None, **kwargs):
         """
         Parameters:
@@ -25,7 +29,7 @@ class Plugin(base.Plugin):
         """
         base_kwargs, source_kwargs = self.separate_base_kwargs(kwargs)
         return MongoDBSource(uri=uri,
-                             collection=collection
+                             collection=collection,
                              query=query,
                              projection=projection,
                              metadata=base_kwargs['metadata'])
@@ -33,6 +37,9 @@ class Plugin(base.Plugin):
 
 class MongoDBSource(base.DataSource):
     def __init__(self, uri, collection, query=None, projection=None, metadata=None):
+        super(MongoDBSource, self).__init__(container='dataframe',
+                                            metadata=metadata)
+
         self._init_args = {
             'uri': uri,
             'collection': collection,
@@ -46,9 +53,11 @@ class MongoDBSource(base.DataSource):
         self._projection = projection
         self._dataframe = None
 
-        super(MongoDBSource, self).__init__(container='dataframe',
-                                            metadata=metadata)
-
+        # We probably want name and description set via an argument.
+        # container on the other hand should be descriptive.
+        self.name = 'unnamed'
+        self.description = None
+        
     def _get_schema(self):
         pass
 

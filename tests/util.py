@@ -1,24 +1,74 @@
 import subprocess
 import shlex
+import numpy
+
+
+
+def _check_attribute(obj, attr, typ, allow_none=False):
+    """Check that a given attribute attr exists in the object obj and
+    is of type typ. Optionally, allow the attribute to be None.
+    """
+    if not hasattr(obj, attr):
+        return False
+
+    val = getattr(obj, attr)
+    return isinstance(val, typ) or (allow_none and val is None)
+
+
+def _check_method(obj, meth):
+    """Check that an object obj has a method meth."""
+    if not hasattr(obj, meth):
+        return False
+
+    return callable(getattr(obj, meth))
 
 
 def verify_plugin_interface(plugin):
     """Assert types of plugin attributes."""
-    assert isinstance(plugin.version, str)
-    assert isinstance(plugin.container, str)
+
+    #check attributes
     assert isinstance(plugin.partition_access, bool)
+    assert _check_attribute(plugin, 'name', str)
+    assert _check_attribute(plugin, 'version', str)
+    assert _check_attribute(plugin, 'api_version', int)
+    assert _check_attribute(plugin, 'container', str)
+    assert plugin.container in ('dataframe', 'ndarray', 'python')
+    assert _check_attribute(plugin, 'partition_access', bool)
+
+    # methods
+    assert _check_method(plugin, 'open')
 
 
 def verify_datasource_interface(source):
     """Assert presence of datasource attributes"""
 
-    for attr in ['container', 'description', 'datashape', 'dtype', 'shape',
-                 'npartitions', 'metadata']:
-        assert hasattr(source, attr)
+    # attributes that need to be present always
+    assert _check_attribute(source, 'name', str)
+    assert _check_attribute(source, 'container', str)
+    assert _check_attribute(source, 'description', str, allow_none=True)
+ 
+    assert _check_attribute(source, 'metadata', dict)
+    assert _check_attribute(source, 'datashape', str)
+    assert _check_attribute(source, 'dtype', str)
+    assert _check_attribute(source, 'shape', tuple)
+    assert all(isinstance(x, int) for x in source.shape)
+    assert _check_attribute(source, 'npartitions', int)
+    assert _check_attribute(source, 'partition_map', dict, allow_none=True)
+    if source.partition_map is not None:
+        assert all(isinstance(key, int) for key in source.partition_map.keys())
+        assert all(isinstance(value, list) and
+                   all(isinstance(hostname, str) for hostname in value)
+                   for value in source.partition_map.values())
+        
+    # methods that need to be present always
+    assert _check_method(source, 'discover')
+    assert _check_method(source, 'read')
+    assert _check_method(source, 'read_chunked')
+    assert _check_method(source, 'read_partition')
+    assert _check_method(source, 'to_dask')
+    assert _check_method(source, 'close')
+    assert _check_method(source, 'plot')
 
-    for method in ['discover', 'read', 'read_chunked', 'read_partition',
-                   'to_dask', 'close']:
-        assert hasattr(source, method)
 
 _MONGODB_INSTANCE_NAME = 'intake-mongodb-test'
 
@@ -52,9 +102,7 @@ def start_mongo():
     # Obtain the local port to which Docker mapped Mongo
     cmd = shlex.split('docker ps --filter "name={}" --format '
                       '"{{{{ .Ports }}}}"'.format(_MONGODB_INSTANCE_NAME))
-    print (cmd)
     port_map = subprocess.check_output(cmd, universal_newlines=True).strip()
-    print (port_map)
     port = port_map.split('->', 1)[0].split(':', 1)[1]
 
     return port
