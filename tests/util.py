@@ -47,11 +47,27 @@ def verify_datasource_interface(source):
     assert _check_attribute(source, 'container', str)
     assert _check_attribute(source, 'description', str, allow_none=True)
  
+     # methods that need to be present always
+    assert _check_method(source, 'discover')
+    assert _check_method(source, 'read')
+    assert _check_method(source, 'read_chunked')
+    assert _check_method(source, 'read_partition')
+    assert _check_method(source, 'to_dask')
+    assert _check_method(source, 'close')
+    #not yet implemented?
+    #assert _check_method(source, 'plot')
+
+
+def verify_open_datasource_interface(source):
+    """Verify that an *open* datasource adheres to the documented interface."""
+    #it must adhere to the base datasource interface
+    verify_datasource_interface(source)
     assert _check_attribute(source, 'metadata', dict)
-    assert _check_attribute(source, 'datashape', str)
-    assert _check_attribute(source, 'dtype', str)
-    assert _check_attribute(source, 'shape', tuple)
-    assert all(isinstance(x, int) for x in source.shape)
+    assert _check_attribute(source, 'datashape', str, allow_none=True)
+    assert _check_attribute(source, 'dtype', numpy.dtype, allow_none=True)
+    assert _check_attribute(source, 'shape', tuple, allow_none=True)
+    assert source.shape is None or all(isinstance(x, int) or x is None for x in source.shape)
+
     assert _check_attribute(source, 'npartitions', int)
     assert _check_attribute(source, 'partition_map', dict, allow_none=True)
     if source.partition_map is not None:
@@ -60,14 +76,6 @@ def verify_datasource_interface(source):
                    all(isinstance(hostname, str) for hostname in value)
                    for value in source.partition_map.values())
         
-    # methods that need to be present always
-    assert _check_method(source, 'discover')
-    assert _check_method(source, 'read')
-    assert _check_method(source, 'read_chunked')
-    assert _check_method(source, 'read_partition')
-    assert _check_method(source, 'to_dask')
-    assert _check_method(source, 'close')
-    assert _check_method(source, 'plot')
 
 
 _MONGODB_INSTANCE_NAME = 'intake-mongodb-test'
