@@ -89,13 +89,10 @@ class MongoDBSource(base.DataSource):
 
     def _init_mongo_adapter(self):
         #initialize mongo adapter using the information provider
-        print(self._host, self._port, self._database, self._collection)
         return MongoAdapter(self._host, self._port, self._database, self._collection)
 
 
     def _get_schema(self):
-        print(self._adapter, self._projection)
-        print(self._adapter[self._projection][0])
         dtype = self._adapter[self._projection][0].dtype
 
         # workaround to partition_map not added in base...
