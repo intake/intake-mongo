@@ -5,45 +5,16 @@ import numpy
 import intake_mongo
 
 from intake import catalog
-from . import util
-#import util
-
-
-TEST_DATA_DIR = 'tests'
-TEST_DATA_CSV = [
-    ('collection1', 'simple_collection.csv')
-]
-
-TEST_DATABASE = 'intake-test-database'
-
-TEST_DATA_FIELDS = {}
-TEST_DATA_DATAFRAMES = {}
-
-def _fill_database(database):
-    import pandas as pd
-
-    for collection_name, data_fname in TEST_DATA_CSV:
-        data_fpath = os.path.join(TEST_DATA_DIR, data_fname)
-        df = pd.read_csv(data_fpath)
-        database[collection_name].insert_many(df.to_dict('records'))
-        TEST_DATA_DATAFRAMES[collection_name] = df
-        TEST_DATA_FIELDS[collection_name] = df.columns.tolist()
-
+from . import sample_data
+from . import util # interface verification
 
 @pytest.fixture(scope='module')
 def engine_uri():
-    from .util import start_mongo, stop_mongo
-    import pymongo
+    from .mongo_test_instance import testing_instance, interactive_instance
 
-    local_port = start_mongo()
-
-    uri = 'mongodb://localhost:{}'.format(local_port)
-    client = pymongo.MongoClient(uri)
-    _fill_database(client[TEST_DATABASE])
-    try:
-        yield uri + '/' + TEST_DATABASE
-    finally:
-        stop_mongo()
+    instance_fn = interactive_instance if os.getenv('REUSE_MONGO') else testing_instance
+    with instance_fn() as mongo_uri:
+        yield mongo_uri
 
 
 def test_mongo_plugin():
@@ -55,22 +26,43 @@ def test_mongo_plugin():
     assert plugin.container == 'dataframe'
 
 
-@pytest.mark.parametrize('dataset, _', TEST_DATA_CSV)
-def test_open(engine_uri, dataset, _):
+@pytest.mark.parametrize('dataset', sample_data.list_datasets())
+def test_open(engine_uri, dataset):
     plugin = intake_mongo.Plugin()
-    data = plugin.open(engine_uri, dataset, TEST_DATA_FIELDS[dataset])
+    data = plugin.open(engine_uri, dataset, sample_data.get_dataset_fields(dataset))
     assert data.container == 'dataframe'
     assert data.description == None
     util.verify_datasource_interface(data)
 
 
-@pytest.mark.parametrize('dataset, _', TEST_DATA_CSV)
-def test_discover(engine_uri, dataset, _):
-    fields = TEST_DATA_FIELDS[dataset]
-    expected_df = TEST_DATA_DATAFRAMES[dataset]
-    expected_dtype = _build_expected_dtype(expected_df)
+def _fuzzy_check_base_type(lhdt, rhdt):
+    """check that the dtypes (lhdt, rhdt) are equivalent, considering
+    all integers regardless of size and signedness equal"""
+    return (lhdt == rhdt or
+            (numpy.issubdtype(lhdt, numpy.integer) and
+             numpy.issubdtype(rhdt, numpy.integer)))
 
-    #print(engine_uri, dataset, fields)
+def _fuzzy_check_type(dtype, df):
+    """This checks that the dataframe types are "ok" wrt the reference_dataframe
+
+    This ignore differences in signedness of integers, as mongoadapter will prefer
+    unsigned values which clashes with the reference data and would be a False error.
+    """
+
+    #check that dtype labels match the dataframe columns
+    names_match = all(x == y for x, y in zip(dtype.names, df.columns))
+
+    dtypes = [dtype.fields[x][0] for x in df.columns]
+    return (names_match and
+               all([_fuzzy_check_base_type(lhdt, rhdt) 
+                    for lhdt, rhdt in zip(dtypes, df.dtypes)]))
+
+
+@pytest.mark.parametrize('dataset', sample_data.list_datasets())
+def test_discover(engine_uri, dataset):
+    fields = sample_data.get_dataset_fields(dataset)
+    expected_df = sample_data.get_dataset(dataset)
+
     plugin = intake_mongo.Plugin()
     data = plugin.open(engine_uri, dataset, fields)
     info = data.discover()
@@ -81,7 +73,7 @@ def test_discover(engine_uri, dataset, _):
 
     # FAILS due to mongoadapter prefering "unsigned" types vs "signed"
     # preferred by pandas' read_csv used to read in sample data.
-    assert info['dtype'] == expected_dtype
+    assert _fuzzy_check_type(info['dtype'], expected_df)
     # mongo plugin does not known the number of tuples before reading
     # (unless "count" is used, which is actually exposed by mongoadapter
     # but it is reportedly slow)

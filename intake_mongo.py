@@ -6,7 +6,7 @@ except ImportError:
 
 from intake.source import base
 from mongoadapter import MongoAdapter
-
+import pandas
 
 class Plugin(base.Plugin):
     def __init__(self):
@@ -69,7 +69,8 @@ class MongoDBSource(base.DataSource):
                 split_url.fragment != ''):
                 raise Exception()
         except Exception as e:
-            new_e = Exception('Unsupported URI for a MongoDB source. Use mongodb://host:port/database')
+            new_e = Exception('Unsupported URI for a MongoDB source.'
+                              ' Use mongodb://host:port/database')
             new_e.original = e
             raise new_e
 
@@ -87,13 +88,16 @@ class MongoDBSource(base.DataSource):
         self.description = None
     
 
-    def _init_mongo_adapter(self):
-        #initialize mongo adapter using the information provider
-        return MongoAdapter(self._host, self._port, self._database, self._collection)
+    @property
+    def _adapter(self):
+        return MongoAdapter(self._host, self._port, self._database,
+                            self._collection)
 
 
     def _get_schema(self):
-        dtype = self._adapter[self._projection][0].dtype
+        # flackey: types could mutate depending on contents of other elements.
+        # HOWEVER: Reading the whole dataset would be overkill
+        dtype = self._adapter[self._projection][0:10].dtype
 
         # workaround to partition_map not added in base...
         self.partition_map = None
@@ -106,17 +110,7 @@ class MongoDBSource(base.DataSource):
 
 
     def _get_partition(self, _):
-        return self._adapter[self._projection][:]
-
-
-    def __getattr__(self, name):
-        if name == '_adapter':
-            #initialize the adapter
-            self._closed  = False
-            self._adapter = self._init_mongo_adapter()
-            return self._adapter
-        else:
-            raise AttributeError(name)
+        return pandas.DataFrame(self._adapter[self._projection][:])
 
 
     def _close(self):
