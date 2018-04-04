@@ -8,6 +8,7 @@ from intake.source import base
 from mongoadapter import MongoAdapter
 import pandas
 
+
 class Plugin(base.Plugin):
     def __init__(self):
         super(Plugin, self).__init__(name='mongo',
@@ -18,13 +19,14 @@ class Plugin(base.Plugin):
         # TODO: The following should be part of "super" initialization.
         self.api_version = 1
 
-
     def open(self, uri, collection, projection, **kwargs):
         """
+        Create MongoDBSource instance
+
         Parameters:
             uri : str
                 Full SQLAlchemy URI for the database connection.
-            query : a mongodb valid query
+            collection : a mongodb valid query
                 mongodb query to be executed.
             projection : a mongodb valid projection
                 mongodb projection
@@ -38,11 +40,16 @@ class Plugin(base.Plugin):
                              projection=projection,
                              metadata=base_kwargs['metadata'])
 
+
 class MongoDBSource(base.DataSource):
     def __init__(self, uri, collection, projection, metadata=None):
-        """arguments are:
-        uri: a valid mongodb uri in the form '[mongodb:]//host:port/database'.
-        collection: The collection in the database that will act as source.
+        """Load data from MongoDB
+
+        Parameters:
+            uri: str
+                a valid mongodb uri in the form '[mongodb:]//host:port/database'.
+            collection: str
+                The collection in the database that will act as source;
         projection: A tuple-like with the fields to query.
         metadate: The metadata to keep
         """
@@ -55,18 +62,17 @@ class MongoDBSource(base.DataSource):
             'projection': projection,
         }
 
-
         try:
             split_url = urlparse.urlsplit(uri, scheme='mongodb')
-            #perform some checking...
+            # perform some checking...
             path = urlparse.unquote(split_url.path).split('/')
 
             if (split_url.scheme != 'mongodb' or
-                split_url.hostname is None or
-                split_url.port is None or
-                len(path) != 2 or path[0] != '' or
-                split_url.query != '' or
-                split_url.fragment != ''):
+                    split_url.hostname is None or
+                    split_url.port is None or
+                    len(path) != 2 or path[0] != '' or
+                    split_url.query != '' or
+                    split_url.fragment != ''):
                 raise Exception()
         except Exception as e:
             new_e = Exception('Unsupported URI for a MongoDB source.'
@@ -77,47 +83,34 @@ class MongoDBSource(base.DataSource):
         self._uri = uri
         self._host = split_url.hostname
         self._port = int(split_url.port)
-        self._database = path[1] # the path portion pointing to the database
+        self._database = path[1]  # the path portion pointing to the database
         self._collection = collection
         self._projection = projection
-        self._closed = None # strictly it hasn't been closed, but it is not 'open' either.
+        self._dtypes = None
+        self._adapter = None
 
-        # We probably want name and description set via an argument.
-        # container on the other hand should be descriptive.
-        self.name = 'unnamed'
-        self.description = None
-    
-
-    @property
-    def _adapter(self):
-        return MongoAdapter(self._host, self._port, self._database,
-                            self._collection)
-
+    def _make_adapter(self):
+        self._adapter = MongoAdapter(self._host, self._port, self._database,
+                                     self._collection)
 
     def _get_schema(self):
-        # flackey: types could mutate depending on contents of other elements.
-        # HOWEVER: Reading the whole dataset would be overkill
-        dtype = self._adapter[self._projection][0:10].dtype
+        if self._adapter is None:
+            self._make_adapter()
 
-        # workaround to partition_map not added in base...
-        self.partition_map = None
+        # flaky: types could mutate depending on contents of other elements.
+        # HOWEVER: Reading the whole dataset would be overkill
+        if self._dtypes is None:
+            self._dtypes = pandas.DataFrame(
+                self._adapter[self._projection][0:10]).dtypes
 
         return base.Schema(datashape=None,
-                           dtype=dtype,
-                           shape=(None,), # length is unknown till read
-                           npartitions=1, # consider only one partition
+                           dtype=self._dtypes,
+                           shape=(None, len(self._dtypes)),
+                           npartitions=1,  # consider only one partition
                            extra_metadata={})
-
 
     def _get_partition(self, _):
         return pandas.DataFrame(self._adapter[self._projection][:])
 
-
     def _close(self):
-        if self._closed == False:
-            del self.partition_map
-            del self._adapter
-
-        self._closed = True
-
-
+        self._adapter = None
