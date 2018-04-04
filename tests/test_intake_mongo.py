@@ -4,9 +4,8 @@ import numpy
 
 import intake_mongo
 
-from intake import catalog
 from . import sample_data
-from . import util # interface verification
+from . import util  # interface verification
 
 
 @pytest.fixture(scope='module')
@@ -23,8 +22,6 @@ def test_mongo_plugin():
     plugin = intake_mongo.Plugin()
     
     util.verify_plugin_interface(plugin)
-    
-    # The mongo plugin should use a dataframe interface
     assert plugin.container == 'dataframe'
 
 
@@ -55,9 +52,6 @@ def test_discover(engine_uri, dataset):
     util.verify_open_datasource_interface(data)
 
     assert expected_df.dtypes.to_dict() == expected_df.dtypes.to_dict()
-    # mongo plugin does not known the number of tuples before reading
-    # (unless "count" is used, which is actually exposed by mongoadapter
-    # but it is reportedly slow)
     assert info['shape'] == (None, len(expected_df.dtypes))
     # mongo plugin yields all in one partition
     assert info['npartitions'] == 1

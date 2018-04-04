@@ -10,9 +10,8 @@ TEST_DATA_CSV = [
 
 _DATAFRAMES = {}
 
-def _read_data():
-    import pandas as pd
 
+def _read_data():
     base_path = os.path.join(os.path.dirname(__file__), TEST_DATA_DIR)
 
     for name, filename in TEST_DATA_CSV:
@@ -23,14 +22,17 @@ def _read_data():
         
 _read_data()
 
+
 def list_datasets():
     return _DATAFRAMES.keys()
+
 
 def get_dataset(name):
     try:
         return _DATAFRAMES[name]
     except KeyError:
         return None
+
 
 def get_dataset_fields(name):
     try:

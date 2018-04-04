@@ -51,8 +51,10 @@ class MongoDBSource(base.DataSource):
                 a valid mongodb uri in the form '[mongodb:]//host:port/database'.
             collection: str
                 The collection in the database that will act as source;
-        projection: A tuple-like with the fields to query.
-        metadate: The metadata to keep
+            projection: tuple/list
+                The fields to query.
+            metadate: dict
+                The metadata to keep
         """
         super(MongoDBSource, self).__init__(container='dataframe',
                                             metadata=metadata)
