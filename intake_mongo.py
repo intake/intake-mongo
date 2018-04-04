@@ -7,12 +7,13 @@ except ImportError:
 from intake.source import base
 from mongoadapter import MongoAdapter
 import pandas
+__version__ = '0.0.1'
 
 
 class Plugin(base.Plugin):
     def __init__(self):
         super(Plugin, self).__init__(name='mongo',
-                                     version='0.1',
+                                     version=version,
                                      container='dataframe',
                                      partition_access=False)
 

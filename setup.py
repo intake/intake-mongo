@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-import versioneer
-
 
 requires = open('requirements.txt').read().strip().split('\n')
 
 setup(
     name='intake-mongo',
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version='0.0.1',
     description='MongoDB plugin for Intake',
     url='https://github.com/ContinuumIO/intake-mongo',
     maintainer='Stan Seibert',
