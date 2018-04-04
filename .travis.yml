@@ -1,0 +1,38 @@
+language: generic
+sudo: required
+services:
+- docker
+os:
+- linux
+env:
+  matrix:
+  - CONDA_PY=27
+  - CONDA_PY=35
+  - CONDA_PY=36
+  global:
+    secure: UK6oqmGlpsmuGX+WfxIcdXy69e+ZwsJPUECRfD0CkfgVWj8Ow+dAPit9KKM4BMx3CnC7IaVdnK4v074uXGCLwDHUtVFAXkOW2pLezsms1Oxu47EvsHjpruQbMSxiBs6a2iC4LAOtfKJ/U9KwDPS8/4KM3ZU0/B4BGqRydSbNb2FBt5RcHJWjzkLS/8r/lbE8FUymY/NxQjEjzHKI8zXrxqIflUi8hY5FF8ZHiOt+9e1uQ/4i9j/yleh5XrEQrRI+2iHNyZjTq790WNvd8LTnB58yxmmWtY5Au/ZiUFe9GFn7j2ycaXmgPQ6I6wu1GYPD77CmPJGQr4wPhOX/hrPV+0pMXPHK9Qw3ysJOWdWwb+1P0onh7S6LUtYhzgrcTscjfr+BUKjOXISKJxHybVW1jSrdv3GM4DppFO9+KKWWbzoEw7saWuUOGna4X2HvqIu2kqLcXjH4bBzqzf4y+SClv25CKbUs075UNyiwRBqtN4JwEAonBEThcodyn5ymHs8G6wRMkatt/s/bNHHrGzZyccsLZ/9X9i40Ej0Jmw4S4VC6jrNMxrlqJ/pO+cDdhqb6RUotZwacIYGUAjJq1n6807c9Mr9adGcLUp6nr90oYFq585q8JzTThToP/sc/CMIJitdgUy7XJiol4q/2iSTm2v6nS5+oTmtL605gV5Pfxl0=
+before_script:
+- |
+  echo "Stopping Travis-CI's PostgreSQL service."
+  sudo service postgresql stop
+install:
+- |
+  sudo apt-get update
+  echo "Installing a fresh version of Miniconda."
+  MINICONDA_URL="https://repo.continuum.io/miniconda"
+  MINICONDA_FILE="Miniconda3-latest-$(case $TRAVIS_OS_NAME in (linux) echo Linux;; (osx) echo MacOSX;;esac)-x86_64.sh"
+  curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
+  bash $MINICONDA_FILE -b
+- |
+  echo "Configuring conda."
+  source $HOME/miniconda3/bin/activate root
+  conda install -y conda-build anaconda-client
+script:
+- conda build -c conda-forge -c "https://conda.anaconda.org/t/$ANACONDA_TOKEN/intake"
+  ./conda
+- if [[ -n "${TRAVIS_TAG}" ]]; then anaconda -t ${ANACONDA_TOKEN} upload `conda build
+  -c intake/label/main --output ./conda`; fi
+notifications:
+  email: false
+  on_success: change
+  on_failure: always
