@@ -17,6 +17,8 @@ requirements:
     - python
     - intake
     - mongoadapter
+    - pymongo
+    - mongo-driver
 
 test:
   source_files:
