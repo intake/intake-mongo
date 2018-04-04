@@ -13,7 +13,7 @@ __version__ = '0.0.1'
 class Plugin(base.Plugin):
     def __init__(self):
         super(Plugin, self).__init__(name='mongo',
-                                     version=version,
+                                     version=__version__,
                                      container='dataframe',
                                      partition_access=False)
 
