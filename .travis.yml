@@ -30,8 +30,8 @@ script:
   else
     conda build -c conda-forge -c "https://conda.anaconda.org/t/$ANACONDA_TOKEN/intake" ./conda;
   fi
-- if [[ -n "${TRAVIS_TAG}" ]]; then anaconda -t ${ANACONDA_TOKEN} upload `conda build
-  -c intake/label/main --output ./conda`; fi
+- if [[ -n "${TRAVIS_TAG}" && "${CONDA_PY}" = "36" ]]; then anaconda -t ${ANACONDA_TOKEN}
+  upload -u intake --force `conda build -c intake/label/main --output ./conda`; fi
 notifications:
   email: false
   on_success: change
