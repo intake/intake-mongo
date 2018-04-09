@@ -26,11 +26,11 @@ install:
   conda install -y conda-build anaconda-client
 script:
 - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-    conda build -c conda-forge -c "https://conda.anaconda.org/t/$ANACONDA_TOKEN/intake" --no-test ./conda;
+    conda build -c conda-forge -c "https://conda.anaconda.org/t/$ANACONDA_INTAKE_TOKEN/intake" --no-test ./conda;
   else
-    conda build -c conda-forge -c "https://conda.anaconda.org/t/$ANACONDA_TOKEN/intake" ./conda;
+    conda build -c conda-forge -c "https://conda.anaconda.org/t/$ANACONDA_INTAKE_TOKEN/intake" ./conda;
   fi
-- if [[ -n "${TRAVIS_TAG}" && "${CONDA_PY}" = "36" ]]; then anaconda -t ${ANACONDA_TOKEN}
+- if [[ -n "${TRAVIS_TAG}" && "${CONDA_PY}" = "36" ]]; then anaconda -t $ANACONDA_INTAKE_TOKEN
   upload -u intake --force `conda build -c intake/label/main --output ./conda`; fi
 notifications:
   email: false
