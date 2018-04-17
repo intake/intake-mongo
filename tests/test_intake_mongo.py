@@ -20,7 +20,7 @@ def engine_uri():
 
 def test_mongo_plugin():
     plugin = intake_mongo.Plugin()
-    
+
     util.verify_plugin_interface(plugin)
     assert plugin.container == 'dataframe'
 
@@ -28,7 +28,8 @@ def test_mongo_plugin():
 @pytest.mark.parametrize('dataset', sample_data.list_datasets())
 def test_open(engine_uri, dataset):
     plugin = intake_mongo.Plugin()
-    data = plugin.open(engine_uri, dataset, sample_data.get_dataset_fields(dataset))
+    data = plugin.open(engine_uri, dataset,
+                       sample_data.get_dataset_fields(dataset))
     assert data.container == 'dataframe'
     util.verify_datasource_interface(data)
 

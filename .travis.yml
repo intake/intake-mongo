@@ -20,7 +20,7 @@ install:
 - |
   echo "Configuring conda."
   source $HOME/miniconda3/bin/activate root
-  conda install -y conda-build anaconda-client
+  conda install -y conda-build anaconda-client flake8
 script:
 - |
   flake8 .
@@ -33,10 +33,10 @@ script:
 - |
   if [ -n "$TRAVIS_TAG" ]; then
       # If tagged git version, upload package to main channel
-      anaconda -t ${ANACONDA_INTAKE_TOKEN} upload -u intake --force `conda build --output ./conda`
+      anaconda -t ${ANACONDA_TOKEN} upload -u intake --force `conda build --output ./conda`
   else
       # Otherwise upload package to dev channel
-      anaconda -t ${ANACONDA_INTAKE_TOKEN} upload -u intake --label dev --force `conda build --output ./conda`
+      anaconda -t ${ANACONDA_TOKEN} upload -u intake --label dev --force `conda build --output ./conda`
   fi
 notifications:
   email: false
