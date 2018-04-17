@@ -4,11 +4,8 @@ services:
   - docker
 os:
   - linux
-  - osx
 env:
   matrix:
-  - CONDA_PY=27
-  - CONDA_PY=35
   - CONDA_PY=36
   global:
     secure: YvZ8bn4U/x5GvGeyjQNojOfahbYtes7h+bevu5eauil0OJ+1NsFxpZeO761LUubIUxESrmcRZaUp7NB/IOiRvUmFEXChu9mIEOrGVJgMLbnc+pC4eoRtr3+54kiiuBo2wL411dtpDYVrtUJHc70n4OVnhA5jdOvrwx9VurcXM4Oj0xoSgl3lDZnxCYvb4c4rl4qOC+J72+5IWuRkki0s0UKE32Ufj8XfPuES1qGv5feCGKj25cAWBkDtYFQosZ5fNWr3I69lAD4GTmZ/knHXyswkMTyYdyV1gj30GAnAiG77Mr6qaedbzGQWz3cNCCZ2QasgAXY8zpRLaD5FRQrmbzM0DwVfReolWwApJBrGqMkzg0BAJDvtCXrL0nArh7WKrQm7PacCgS6vkmHwqz7IUKEdZU7skNApwaTgGcmt3qs0OfR4RjrmoolSoHN/yYFT6HoX2gWDVWcaNsAxhS0nSuggZ1AacpHOVspgyCLoi51vJFGxnmyFvbniJo/6T1tfY3wV0MaapNyM2vlBLGNpQCMNpLqgquHPn15wfZlj/l8zTtv50csgodQ8tlxLP+pFtCx36zoKJ0Q8l11UQXUQNUDgLCZrDvXX3aoRS8UBXCPmu0CA8QMp/lrogy95a5aM8rkKF5+YYjLdeczhZKcHYHhlJ9OH26nGiVG9cDo2+tU=
