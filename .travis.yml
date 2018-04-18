@@ -22,6 +22,8 @@ install:
   source $HOME/miniconda3/bin/activate root
   conda install -y conda-build anaconda-client flake8
   conda info -a
+  git describe --tags --long HEAD
+  git rev-parse HEAD
 script:
 - |
   flake8 .
