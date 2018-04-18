@@ -2,6 +2,8 @@ language: generic
 sudo: required
 services:
   - docker
+git:
+  depth: false
 os:
   - linux
 env:
@@ -22,6 +24,7 @@ install:
   source $HOME/miniconda3/bin/activate root
   conda install -y conda-build anaconda-client flake8
   conda info -a
+  git fetch --unshallow
   git describe --tags --long HEAD
   git rev-parse HEAD
 script:
