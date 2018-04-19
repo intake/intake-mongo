@@ -5,11 +5,12 @@ Two use cases:
 - Raise and remove a clean instance to run on automatic tests.
 
 - Start/Stop/Check an instance to be used on interactive tests and when
-  developing avoiding the heavy create and destroy cycle that slows down development
+  developing avoiding the heavy create and destroy cycle that slows down
+  development
 
 As an script, you can use this to start/stop/restart or get info for an mongodb
-instance for interactive use. Start/restart/info will echo to stdout the mongodb
-uri suited for local use.
+instance for interactive use. Start/restart/info will echo to stdout the
+mongodb uri suited for local use.
 """
 
 import subprocess
@@ -29,11 +30,12 @@ def get_instance(name, dbname):
                       '"{{{{ .Ports }}}}"'.format(name))
 
     try:
-        port_map = subprocess.check_output(cmd, universal_newlines=True).strip()
+        port_map = subprocess.check_output(cmd, universal_newlines=True
+                                           ).strip()
         port = port_map.split('->', 1)[0].split(':', 1)[1]
 
         return 'mongodb://localhost:{}/{}'.format(port, dbname)
-    except Exception:
+    except (subprocess.CalledProcessError, OSError):
         return None
 
 
@@ -43,7 +45,7 @@ def start_instance(name, dbname):
     Returns the uri of the mongo instance (using localhost)
     """
 
-    #publish mongo port
+    # publish mongo port
     cmd = shlex.split('docker run --rm --name {} --publish 27017 '
                       '{}'.format(name, _DOCKER_IMAGE))
 
@@ -56,24 +58,25 @@ def start_instance(name, dbname):
         output_line = proc.stdout.readline()
         # print(output_line.rstrip())
 
-        #if exitted, raise an exception
+        # if exitted, raise an exception
         if proc.poll() is not None:
             raise Exception("'{}' failed to start.".format(name))
 
         if 'waiting for connections' in output_line:
             break
 
-    #obtain the local port that maps to mongo
+    # obtain the local port that maps to mongo
     uri = get_instance(name, dbname)
     if uri is None:
         raise Exception("The docker instance '{}' did not start propery", name)
 
-    #initialize with the dataset data
+    # initialize with the dataset data
     import pymongo
-    client = pymongo.MongoClient(uri) #note pymongo ignores the dbname in the uri
-    
-    #hack: this is used stand-alone as well as inside pytest where it is imported as
-    #      a submodule... if local import fails, try global import
+    # note pymongo ignores the dbname in the uri
+    client = pymongo.MongoClient(uri)
+
+    # hack: this is used stand-alone as well as inside pytest where it is
+    # imported as a submodule... if local import fails, try global import
     try:
         from . import sample_data
     except ImportError:
@@ -81,7 +84,8 @@ def start_instance(name, dbname):
 
     db = client[dbname]
     for dataset in sample_data.list_datasets():
-        db[dataset].insert_many(sample_data.get_dataset(dataset).to_dict('records'))
+        db[dataset].insert_many(sample_data.get_dataset(
+            dataset).to_dict('records'))
 
     return uri
 
@@ -126,8 +130,8 @@ def interactive_instance(name=None, dbname=None, start_if_needed=False):
 
     yield uri
     # this is a context manager to be interchangeable with the testing_instance
-    # context manager. However, cleaning up the running (or started) instance is
-    # not wanted.
+    # context manager. However, cleaning up the running (or started) instance
+    # is not wanted.
 
 
 if __name__ == '__main__':
@@ -154,13 +158,13 @@ if __name__ == '__main__':
                 exit(0)
             print("Stopped.")
             exit(1)
-            
+
         elif sys.argv[1] == 'restart':
             stop_instance(name, let_fail=True)
             try:
                 instance_uri = start_instance(name, dbname)
             except Exception as e:
-                print(e.msg)
+                print(e)
                 exit(0)
             print(instance_uri)
             exit(1)

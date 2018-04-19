@@ -18,8 +18,8 @@ def _read_data():
         full_path = os.path.join(base_path, filename)
         df = pandas.read_csv(full_path)
         _DATAFRAMES[name] = df
-        
-        
+
+
 _read_data()
 
 

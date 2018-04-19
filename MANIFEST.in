@@ -4,3 +4,4 @@ recursive-include . *.yml
 
 include versioneer.py
 include ./_version.py
+include intake_mongo/_version.py
