@@ -57,7 +57,7 @@ A full entry might look like::
 
 
     sources:
-      - name: sample1
+      sample1:
         driver: mongo
         args:
           uri: 'mongodb://localhost:27017'
