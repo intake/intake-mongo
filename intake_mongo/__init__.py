@@ -9,30 +9,39 @@ class Plugin(base.Plugin):
     def __init__(self):
         super(Plugin, self).__init__(name='mongo',
                                      version=__version__,
-                                     container='dataframe',
+                                     container='python',
                                      partition_access=False)
 
-        # TODO: The following should be part of "super" initialization.
-        self.api_version = 1
-
-    def open(self, uri, collection, projection, **kwargs):
+    def open(self, uri, db, collection, connect_kwargs=None, find_kwargs=None,
+             metadata=None):
         """
         Create MongoDBSource instance
 
-        Parameters:
-            uri : str
-                Full SQLAlchemy URI for the database connection.
-            collection : a mongodb valid query
-                mongodb query to be executed.
-            projection : a mongodb valid projection
-                mongodb projection
-            kwargs (dict):
-                Additional parameters to pass as keyword arguments to
-                ``PostgresAdapter`` constructor.
+        Parameters
+        ----------
+        uri: str
+            a valid mongodb uri in the form
+            '[mongodb:]//host:port'.
+            The URI may include authentication information, see
+            http://api.mongodb.com/python/current/examples/authentication.html
+        db: str
+            The database to access
+        collection: str
+            The collection in the database that will act as source;
+        connect_kwargs: dict or None
+            Parameters passed to the pymongo ``MongoClient``, see
+            http://api.mongodb.com/python/current/api/pymongo/mongo_client.html#pymongo.mongo_client.MongoClient
+            This may include security information such as passwords and
+            certificates
+        find_kwargs: dict or None
+            Parameters passed to the pymongo ``.find()`` method, see
+            http://api.mongodb.com/python/current/api/pymongo/collection.html#pymongo.collection.Collection.find
+            This includes filters, choice of fields, sorting, etc.
+        metadata: dict
+            The metadata to keep
         """
         from intake_mongo.intake_mongo import MongoDBSource
-        base_kwargs, source_kwargs = self.separate_base_kwargs(kwargs)
-        return MongoDBSource(uri=uri,
-                             collection=collection,
-                             projection=projection,
-                             metadata=base_kwargs['metadata'])
+        return MongoDBSource(uri, db, collection,
+                             connect_kwargs=connect_kwargs,
+                             find_kwargs=find_kwargs,
+                             metadata=metadata or {})

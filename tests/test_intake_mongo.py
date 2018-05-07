@@ -4,55 +4,32 @@ import numpy
 
 import intake_mongo
 
-from . import sample_data
 from . import util  # interface verification
+from .mongo_test_instance import start_mongo, URI, stop_docker, data, DB, COLL
 
 
 @pytest.fixture(scope='module')
-def engine_uri():
-    from .mongo_test_instance import testing_instance, interactive_instance
-
-    instance_fn = (interactive_instance if os.getenv('REUSE_MONGO')
-                   else testing_instance)
-    with instance_fn() as mongo_uri:
-        yield mongo_uri
+def engine():
+    cid = start_mongo()
+    try:
+        yield URI
+    finally:
+        stop_docker(cid=cid)
 
 
 def test_mongo_plugin():
     plugin = intake_mongo.Plugin()
 
     util.verify_plugin_interface(plugin)
-    assert plugin.container == 'dataframe'
+    assert plugin.container == 'python'
 
 
-@pytest.mark.parametrize('dataset', sample_data.list_datasets())
-def test_open(engine_uri, dataset):
+def test_simple_read(engine):
     plugin = intake_mongo.Plugin()
-    data = plugin.open(engine_uri, dataset,
-                       sample_data.get_dataset_fields(dataset))
-    assert data.container == 'dataframe'
-    util.verify_datasource_interface(data)
-
-
-def _fuzzy_check_base_type(lhdt, rhdt):
-    """check that the dtypes (lhdt, rhdt) are equivalent, considering
-    all integers regardless of size and signedness equal"""
-    return (lhdt == rhdt or
-            (numpy.issubdtype(lhdt, numpy.integer) and
-             numpy.issubdtype(rhdt, numpy.integer)))
-
-
-@pytest.mark.parametrize('dataset', sample_data.list_datasets())
-def test_discover(engine_uri, dataset):
-    fields = sample_data.get_dataset_fields(dataset)
-    expected_df = sample_data.get_dataset(dataset)
-
-    plugin = intake_mongo.Plugin()
-    data = plugin.open(engine_uri, dataset, fields)
-    info = data.discover()
-    util.verify_open_datasource_interface(data)
-
-    assert expected_df.dtypes.to_dict() == expected_df.dtypes.to_dict()
-    assert info['shape'] == (None, len(expected_df.dtypes))
-    # mongo plugin yields all in one partition
+    s = plugin.open(engine, DB, COLL)
+    info = s.discover()
     assert info['npartitions'] == 1
+    out = s.read()
+    assert out == data
+    s.close()
+    assert s.collection is None

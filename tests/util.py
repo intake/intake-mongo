@@ -27,7 +27,6 @@ def verify_plugin_interface(plugin):
     assert isinstance(plugin.partition_access, bool)
     assert _check_attribute(plugin, 'name', str)
     assert _check_attribute(plugin, 'version', str)
-    assert _check_attribute(plugin, 'api_version', int)
     assert _check_attribute(plugin, 'container', str)
     assert plugin.container in ('dataframe', 'ndarray', 'python')
     assert _check_attribute(plugin, 'partition_access', bool)
