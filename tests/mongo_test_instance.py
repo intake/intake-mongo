@@ -24,7 +24,7 @@ def start_mongo():
     # the return value is actually the container ID
     cid = subprocess.check_output(shlex.split(cmd)).strip().decode()
 
-    timeout = 15
+    timeout = 75
     while True:
         try:
             c = pymongo.MongoClient(URI)
