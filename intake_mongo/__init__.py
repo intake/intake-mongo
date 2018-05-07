@@ -12,8 +12,8 @@ class Plugin(base.Plugin):
                                      container='python',
                                      partition_access=False)
 
-    def open(self, uri, db, collection, connect_kwargs=None, find_kwargs=None,
-             metadata=None):
+    def open(self, uri, db, collection, _id=False, connect_kwargs=None,
+             find_kwargs=None, metadata=None):
         """
         Create MongoDBSource instance
 
@@ -28,6 +28,8 @@ class Plugin(base.Plugin):
             The database to access
         collection: str
             The collection in the database that will act as source;
+        _id: False or None
+            If False, remove default "_id" field from output
         connect_kwargs: dict or None
             Parameters passed to the pymongo ``MongoClient``, see
             http://api.mongodb.com/python/current/api/pymongo/mongo_client.html#pymongo.mongo_client.MongoClient
@@ -41,7 +43,7 @@ class Plugin(base.Plugin):
             The metadata to keep
         """
         from intake_mongo.intake_mongo import MongoDBSource
-        return MongoDBSource(uri, db, collection,
+        return MongoDBSource(uri, db, collection, _id=_id,
                              connect_kwargs=connect_kwargs,
                              find_kwargs=find_kwargs,
                              metadata=metadata or {})

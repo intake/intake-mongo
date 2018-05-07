@@ -1,7 +1,7 @@
-import os
 import pytest
-import numpy
+import pymongo
 
+import intake
 import intake_mongo
 
 from . import util  # interface verification
@@ -33,3 +33,15 @@ def test_simple_read(engine):
     assert out == data
     s.close()
     assert s.collection is None
+
+
+def test_read_kwargs(engine):
+    s = intake.open_mongo(engine, DB, COLL, _id=False,
+                          find_kwargs={'projection': ['value']})
+    data2 = [{'value': c['value']} for c in data]
+    assert s.read() == data2
+    s = intake.open_mongo(engine, DB, COLL, _id=False,
+                          find_kwargs={'projection': ['value'],
+                                       'sort': [('value', pymongo.ASCENDING)],
+                                       'limit': 10})
+    assert s.read() == list(sorted(data2, key=lambda x: x['value']))[:10]

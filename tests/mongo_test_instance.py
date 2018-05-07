@@ -35,7 +35,7 @@ def start_mongo():
             timeout -= 0.2
             if timeout < 0:
                 raise RuntimeError('timeout waiting for Mongo')
-    c[DB][COLL].insert_many(data)
+    c[DB][COLL].insert_many([d.copy() for d in data])
     return cid
 
 

@@ -10,7 +10,7 @@ import pymongo
 
 class MongoDBSource(base.DataSource):
     def __init__(self, uri, db, collection, connect_kwargs=None,
-                 find_kwargs=None, metadata=None):
+                 find_kwargs=None, _id=None, metadata=None):
         """Load data from MongoDB
 
         Parameters
@@ -33,6 +33,8 @@ class MongoDBSource(base.DataSource):
             Parameters passed to the pymongo ``.find()`` method, see
             http://api.mongodb.com/python/current/api/pymongo/collection.html#pymongo.collection.Collection.find
             This includes filters, choice of fields, sorting, etc.
+        _id: False or None
+            If False, remove default "_id" field from output
         metadata: dict
             The metadata to keep
         """
@@ -43,6 +45,7 @@ class MongoDBSource(base.DataSource):
         self._collection = collection
         self._connect_kwargs = connect_kwargs or {}
         self._find_kwargs = find_kwargs or {}
+        self._id = _id
         self.collection = None
 
     def _get_schema(self):
@@ -57,7 +60,18 @@ class MongoDBSource(base.DataSource):
                            extra_metadata={})
 
     def _get_partition(self, _):
-        return list(self.collection.find(**self._find_kwargs))
+        kw = self._find_kwargs.copy()
+        if self._id is False:
+            # https://stackoverflow.com/a/12345646/3821154
+            if 'projection' in kw:
+                pro = kw.pop('projection')
+                if isinstance(pro, (list, tuple)):
+                    pro = {k: True for k in pro}
+                pro['_id'] = False
+            else:
+                pro = {'_id': False}
+            kw['projection'] = pro
+        return list(self.collection.find(**kw))
 
     def _close(self):
         self.collection = None
