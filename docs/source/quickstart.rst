@@ -75,3 +75,5 @@ A full entry might look like::
 In this case, we specify a connection to the local machine, connect with SSL activated,
 and select only "field1" and "field2" of ``mycollection`` to retrieve, with the default
 ID column not included in the output.
+
+Note that the set of options available will depend on the version of pymongo installed.

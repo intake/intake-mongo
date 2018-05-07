@@ -19,16 +19,16 @@ def start_mongo():
     stop_docker(let_fail=True)
     print('Starting MongoDB server...')
 
-    cmd = 'docker run -d --name intake-mongo -p 27017:27017 mongo'
+    cmd = 'docker run --rm -d --name intake-mongo -p 27017:27017 mongo'
     print(cmd)
     # the return value is actually the container ID
     cid = subprocess.check_output(shlex.split(cmd)).strip().decode()
 
-    timeout = 75
+    timeout = 15
     while True:
         try:
             c = pymongo.MongoClient(URI)
-            c.list_database_names()
+            c.database_names()
             break
         except:
             time.sleep(0.2)
@@ -59,8 +59,7 @@ def stop_docker(name='intake-mongo', cid=None, let_fail=False):
             cid = subprocess.check_output(cmd).strip().decode()
         if cid:
             print('Stopping %s ...' % cid)
-            subprocess.call(['docker', 'kill', cid])
-            subprocess.call(['docker', 'rm', cid])
+            subprocess.call(['docker', 'rm', '-f', cid])
     except subprocess.CalledProcessError as e:
         print(e)
         if not let_fail:
