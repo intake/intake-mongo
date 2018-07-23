@@ -5,12 +5,17 @@ except ImportError:
     import urlparse
 
 from intake.source import base
-import pymongo
+from . import __version__
 
 
 class MongoDBSource(base.DataSource):
+    name = 'mongo'
+    container = 'python'
+    partition_access = False
+    version = __version__
+
     def __init__(self, uri, db, collection, connect_kwargs=None,
-                 find_kwargs=None, _id=None, metadata=None):
+                 find_kwargs=None, _id=False, metadata=None):
         """Load data from MongoDB
 
         Parameters
@@ -33,13 +38,12 @@ class MongoDBSource(base.DataSource):
             Parameters passed to the pymongo ``.find()`` method, see
             http://api.mongodb.com/python/current/api/pymongo/collection.html#pymongo.collection.Collection.find
             This includes filters, choice of fields, sorting, etc.
-        _id: False or None
+        _id: bool (False)
             If False, remove default "_id" field from output
         metadata: dict
             The metadata to keep
         """
-        super(MongoDBSource, self).__init__(container='python',
-                                            metadata=metadata)
+        super(MongoDBSource, self).__init__(metadata=metadata)
         self._uri = uri
         self._db = db
         self._collection = collection
@@ -49,6 +53,7 @@ class MongoDBSource(base.DataSource):
         self.collection = None
 
     def _get_schema(self):
+        import pymongo
         if self.collection is None:
             mongo = pymongo.MongoClient(self._uri, **self._connect_kwargs)
             self.collection = mongo[self._db][self._collection]
@@ -60,6 +65,7 @@ class MongoDBSource(base.DataSource):
                            extra_metadata={})
 
     def _get_partition(self, _):
+        self._get_schema()
         kw = self._find_kwargs.copy()
         if self._id is False:
             # https://stackoverflow.com/a/12345646/3821154
