@@ -32,14 +32,6 @@ script:
       # Workaround for Travis-CI bug #2: https://github.com/travis-ci/travis-ci/issues/7773
       conda build -c intake -c defaults -c conda-forge --no-test ./conda
   fi
-- |
-  if [ -n "$TRAVIS_TAG" ]; then
-      # If tagged git version, upload package to main channel
-      anaconda -t "${ANACONDA_TOKEN}" upload -u intake --force `conda build --output ./conda`
-  else
-      # Otherwise upload package to dev channel
-      anaconda -t "${ANACONDA_TOKEN}" upload -u intake --label dev --force `conda build --output ./conda`
-  fi
 notifications:
   email: false
   on_success: change

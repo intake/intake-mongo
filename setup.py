@@ -15,6 +15,10 @@ setup(
     maintainer_email='sseibert@anaconda.com',
     license='BSD',
     packages=find_packages(),
+    entry_points={
+        'intake.drivers': [
+            'mongo = intake_mongo.intake_mongo:MongoDBSource',
+        ]},
     package_data={'': ['*.csv', '*.yml', '*.html']},
     include_package_data=True,
     install_requires=requires,
